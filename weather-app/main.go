@@ -92,10 +92,23 @@ func main() {
 	city := flag.String("city", "", "Name of the city")
 	country := flag.String("country", "", "Country of the city")
 	day := flag.String("day", "", "Day for the weather forecast (e.g., '2024-10-31')")
+
+	flag.Usage = func() {
+		fmt.Println("Weather CLI Tool")
+		fmt.Println("Fetches weather information for a specified city and date.")
+		fmt.Println()
+		fmt.Println("Usage:")
+		fmt.Println("  go run main.go -city=\"CityName\" -country=\"CountryName\" -day=\"YYYY-MM-DD\"")
+		fmt.Println()
+		fmt.Println("Flags:")
+		flag.PrintDefaults()
+	}
+
 	flag.Parse()
 
-	if *city == "" || *country == "" || *day == "" {
-		log.Fatal("City, country, and day must be provided.")
+	if len(os.Args) == 1 || *city == "" || *country == "" || *day == "" {
+		flag.Usage()
+		os.Exit(1)
 	}
 
 	// TODO: ask weather
