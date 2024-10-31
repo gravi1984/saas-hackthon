@@ -138,13 +138,22 @@ func processJsonData(jsonData []byte, fah bool) {
 		if err != nil {
 			panic(err)
 		}
-		if fah {
-		fmt.Println(createPattern(stars), fmt.Sprintf("%02d", int(temp)-70), "°F", resp.History.World[i], t.Weekday())
-		} else {
-			fmt.Println(createPattern(stars), fmt.Sprintf("%02d", int(temp)-70), "°C", resp.History.World[i], t.Weekday())
-
+		var sunrise = "Sunrise"
+		if len(resp.History.Sunrise) != 0 {
+			sunrise = resp.History.Sunrise[i]
 		}
 
+		var sunset = "Sunset"
+		if len(resp.History.Sunset) != 0 {
+			sunset = resp.History.Sunset[i]
+		}
+
+		if fah {
+		fmt.Println(createPattern(stars), fmt.Sprintf("%02d", int(temp)-70), "°F",resp.History.World[i], sunrise, sunset, t.Weekday())
+		} else {
+			fmt.Println(createPattern(stars), fmt.Sprintf("%02d", int(temp)-70), "°C", resp.History.World[i], sunrise, sunset, t.Weekday())
+
+		}
 	}
 
 }
