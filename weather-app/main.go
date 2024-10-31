@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"time"
 	"strings"
+	"time"
 )
 
 type City struct {
@@ -36,29 +36,27 @@ type Location struct {
 
 type ForecastParams struct {
 	Precipitation bool
-	Sunrise bool
-	Sunset bool
-	UVIndex bool
+	Sunrise       bool
+	Sunset        bool
+	UVIndex       bool
 }
-
 
 func formatExtraForecastParams(f ForecastParams) string {
 	var formattedParams strings.Builder
-	if f.Precipitation{
+	if f.Precipitation {
 		formattedParams.WriteString(",precipitation_sum")
 	}
-	if f.Sunrise{
+	if f.Sunrise {
 		formattedParams.WriteString(",sunrise")
 	}
-	if f.Sunset{
+	if f.Sunset {
 		formattedParams.WriteString(",sunset")
 	}
-	if f.UVIndex{
-		
+	if f.UVIndex {
+
 	}
 	return formattedParams.String()
 }
-
 
 func GetWeather(loc Location, forecast_params ForecastParams) ([]byte, error) {
 	var formattedUrl strings.Builder
@@ -119,8 +117,10 @@ func main() {
 	city := flag.String("city", "", "Name of the city (e.g., 'The Hague') - *Mandatory")
 	country := flag.String("country", "", "Country of the city (e.g., 'Netherlands') - *Mandatory")
 	day := flag.String("day", "", "Day for the weather forecast (e.g., '2024-10-31') - Optional (default is today)")
+	prec := flag.Bool("p", false, "Get precipitation - Optional")
 	uv := flag.Bool("uv", false, "Get UV index - Optional")
 	sunrise := flag.Bool("sunrise", false, "Get sunrise time - Optional")
+	sunset := flag.Bool("sunset", false, "Get sunset time - Optional")
 
 	flag.Usage = func() {
 		fmt.Println("Weather Forcast Tool")
@@ -134,8 +134,10 @@ func main() {
 		fmt.Println()
 		fmt.Println("Optional Flags:")
 		fmt.Println("  -day       Day for the weather forecast (default is today)")
+		fmt.Println("  -p   	  Get precipitation")
 		fmt.Println("  -uv        Get UV index")
 		fmt.Println("  -sunrise   Get sunrise time")
+		fmt.Println("  -sunset    Get sunset time")
 	}
 
 	flag.Parse()
@@ -160,8 +162,14 @@ func main() {
 		Latitude:  lat,
 		Longitude: lon,
 	}
+	params := ForecastParams{
+		Precipitation: *prec,
+		Sunrise:       *sunrise,
+		Sunset:        *sunset,
+		UVIndex:       *uv,
+	}
 
-	weather, err := GetWeather(loc, *uv, *sunrise)
+	weather, err := GetWeather(loc, params)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
