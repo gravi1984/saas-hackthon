@@ -92,6 +92,9 @@ type Response struct {
 type History struct {
 	Hello []float64 `json:"temperature_2m_max"`
 	World []string  `json:"time"`
+	Index []float64 `json:"uv_index_max"`
+	Sunrise []string `json:"sunrise"`
+	Sunset []string `json:"sunset"`
 }
 
 func createPattern(n int) string {
