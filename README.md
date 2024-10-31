@@ -2,4 +2,5 @@
 
 
 cd weather-app
-go run main.go -city="The Hague" -country="Netherlands" -day="2024-11-01"
+go run main.go -h
+go run main.go -city="The Hague" -country="Netherlands" -p -uv -sunrise -sunset -f
