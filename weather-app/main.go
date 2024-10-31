@@ -138,12 +138,12 @@ func processJsonData(jsonData []byte, fah bool) {
 		if err != nil {
 			panic(err)
 		}
-		var sunrise = "Sunrise"
+		var sunrise = "_"
 		if len(resp.History.Sunrise) != 0 {
 			sunrise = resp.History.Sunrise[i]
 		}
 
-		var sunset = "Sunset"
+		var sunset = "_"
 		if len(resp.History.Sunset) != 0 {
 			sunset = resp.History.Sunset[i]
 		}
