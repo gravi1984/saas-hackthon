@@ -1,6 +1,5 @@
 # saas-hackthon
-9
 
 
 cd weather-app
-go run main.go -city="The Hague" -country="NL" -day="2024-11-01"
+go run main.go -city="The Hague" -country="Netherlands" -day="2024-11-01"
