@@ -163,7 +163,6 @@ func FindCityLocation(city City) (string, string, error) {
 
 	for i := 0; i < len(geocodingResponse.GeoCodingResults); i++ {
 		if geocodingResponse.GeoCodingResults[i].Country == city.Country {
-			log.Println("Matched country location: ", geocodingResponse.GeoCodingResults[i])
 			return geocodingResponse.GeoCodingResults[i].Latitude.String(), geocodingResponse.GeoCodingResults[i].Longitude.String(), nil
 		}
 	}
@@ -237,7 +236,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	// TODO: Print weather
-	fmt.Printf("Weather in %s, %s on %s: %s\n", *city, *country, *day, string(weather))
 	processJsonData(weather)
 }
