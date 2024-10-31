@@ -39,6 +39,7 @@ type ForecastParams struct {
 	Sunrise bool
 	Sunset bool
 	UVIndex bool
+	Fahr  bool
 }
 
 
@@ -54,7 +55,10 @@ func formatExtraForecastParams(f ForecastParams) string {
 		formattedParams.WriteString(",sunset")
 	}
 	if f.UVIndex{
-		
+		formattedParams.WriteString(",uv_index_max")	
+	}
+	if f.Fahr{
+		formattedParams.WriteString("&temperature_unit=fahrenheit")
 	}
 	return formattedParams.String()
 }
@@ -68,7 +72,7 @@ func GetWeather(loc Location, forecast_params ForecastParams) ([]byte, error) {
 		loc.Latitude, 
 		loc.Longitude,
 	))
-	
+	formattedUrl.WriteString(formatExtraForecastParams(forecast_params))
 
 	response, err := http.Get(formattedUrl.String())
 
