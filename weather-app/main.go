@@ -19,12 +19,11 @@ type GeoCodingResponse struct {
 	GeoCodingResults []GeoCodingResult `json:"results"`
 }
 
-
 type GeoCodingResult struct {
-	Name      string `json:"name"`
+	Name      string      `json:"name"`
 	Latitude  json.Number `json:"latitude"`
 	Longitude json.Number `json:"longitude"`
-	Country   string `json:"country"`
+	Country   string      `json:"country"`
 }
 
 type Location struct {
@@ -79,15 +78,14 @@ func FindCityLocation(city City) (string, string, error) {
 		if geocodingResponse.GeoCodingResults[i].Country == city.Country {
 			log.Println("Matched country location: ", geocodingResponse.GeoCodingResults[i])
 			return geocodingResponse.GeoCodingResults[i].Latitude.String(), geocodingResponse.GeoCodingResults[i].Longitude.String(), nil
-		}	
+		}
 	}
 
 	return "", "", fmt.Errorf("Could not find a proper location match for %s of country %s", city.Name, city.Country)
 }
 
-
 func main() {
-	// Take input
+	// TODO: Take input
 	city := flag.String("city", "", "Name of the city")
 	country := flag.String("country", "", "Country of the city")
 	day := flag.String("day", "", "Day for the weather forecast (e.g., '2024-10-31')")
@@ -97,8 +95,9 @@ func main() {
 		log.Fatal("City, country, and day must be provided.")
 	}
 
+	// TODO: ask weather
 	lat, lon, err := FindCityLocation(City{Name: *city, Country: *country})
-	if err != nil{
+	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -110,6 +109,6 @@ func main() {
 
 	weather := GetWeather(loc)
 
-	// Print weather
+	// TODO: Print weather
 	fmt.Printf("Weather in %s, %s on %s: %s\n", *city, *country, *day, string(weather))
 }
