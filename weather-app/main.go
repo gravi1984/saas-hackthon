@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 )
 
 type City struct {
@@ -37,7 +38,7 @@ type Forecast struct {
 	Location    Location
 }
 
-func GetWeather(loc Location) ([]byte, error) {
+func GetWeather(loc Location, uv bool, sunrise bool) ([]byte, error) {
 	formattedURL := fmt.Sprintf(
 		"https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&daily=temperature_2m_max,temperature_2m_min",
 		loc.Latitude,
@@ -89,26 +90,37 @@ func FindCityLocation(city City) (string, string, error) {
 
 func main() {
 	// TODO: Take input
-	city := flag.String("city", "", "Name of the city")
-	country := flag.String("country", "", "Country of the city")
-	day := flag.String("day", "", "Day for the weather forecast (e.g., '2024-10-31')")
+	city := flag.String("city", "", "Name of the city (e.g., 'The Hague') - *Mandatory")
+	country := flag.String("country", "", "Country of the city (e.g., 'Netherlands') - *Mandatory")
+	day := flag.String("day", "", "Day for the weather forecast (e.g., '2024-10-31') - Optional (default is today)")
+	uv := flag.Bool("uv", false, "Get UV index - Optional")
+	sunrise := flag.Bool("sunrise", false, "Get sunrise time - Optional")
 
 	flag.Usage = func() {
-		fmt.Println("Weather CLI Tool")
-		fmt.Println("Fetches weather information for a specified city and date.")
-		fmt.Println()
+		fmt.Println("Weather Forcast Tool")
+		fmt.Println("Weekly weather forcast for a city.")
 		fmt.Println("Usage:")
-		fmt.Println("  go run main.go -city=\"CityName\" -country=\"CountryName\" -day=\"YYYY-MM-DD\"")
+		fmt.Println("  go run main.go -city=\"CityName\" -country=\"CountryName\" [-day=\"YYYY-MM-DD\"] [-uv] [-sunrise]")
 		fmt.Println()
-		fmt.Println("Flags:")
-		flag.PrintDefaults()
+		fmt.Println("Mandatory Flags:")
+		fmt.Println("  -city      Name of the city (e.g., 'The Hague')")
+		fmt.Println("  -country   Country of the city (e.g., 'Netherlands')")
+		fmt.Println()
+		fmt.Println("Optional Flags:")
+		fmt.Println("  -day       Day for the weather forecast (default is today)")
+		fmt.Println("  -uv        Get UV index")
+		fmt.Println("  -sunrise   Get sunrise time")
 	}
 
 	flag.Parse()
 
-	if len(os.Args) == 1 || *city == "" || *country == "" || *day == "" {
+	if *city == "" || *country == "" {
 		flag.Usage()
 		os.Exit(1)
+	}
+
+	if *day == "" {
+		*day = time.Now().Format("2006-01-02")
 	}
 
 	// TODO: ask weather
@@ -123,7 +135,7 @@ func main() {
 		Longitude: lon,
 	}
 
-	weather, err := GetWeather(loc)
+	weather, err := GetWeather(loc, *uv, *sunrise)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
