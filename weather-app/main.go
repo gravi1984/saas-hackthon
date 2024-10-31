@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"os"
 	"strings"
-	"time"
 )
 
 type City struct {
@@ -44,6 +43,7 @@ type ForecastParams struct {
 
 func formatExtraForecastParams(f ForecastParams) string {
 	var formattedParams strings.Builder
+	formattedParams.WriteString("&daily=temperature_2m_max,temperature_2m_min")
 	if f.Precipitation {
 		formattedParams.WriteString(",precipitation_sum")
 	}
@@ -66,35 +66,35 @@ func GetWeather(loc Location, forecast_params ForecastParams) ([]byte, error) {
 	var formattedUrl strings.Builder
 	formattedUrl.WriteString("https://api.open-meteo.com/v1/forecast?")
 	formattedUrl.WriteString(fmt.Sprintf(
-		"latitude=%s&longitude=%s&daily=temperature_2m_max,temperature_2m_min",
+		"latitude=%s&longitude=%s",
 		loc.Latitude,
 		loc.Longitude,
 	))
 	formattedUrl.WriteString(formatExtraForecastParams(forecast_params))
 
 	response, err := http.Get(formattedUrl.String())
-
 	if err != nil {
 		return []byte{}, err
 	}
-
 	responseData, err := io.ReadAll(response.Body)
 	if err != nil {
 		return []byte{}, err
 	}
-
 	return responseData, nil
 }
 
 type Response struct {
 	History History `json:"daily"`
 }
+
 type History struct {
-	Hello   []float64 `json:"temperature_2m_max"`
-	World   []string  `json:"time"`
-	Index   []float64 `json:"uv_index_max"`
-	Sunrise []string  `json:"sunrise"`
-	Sunset  []string  `json:"sunset"`
+	MaxTemps []float64 `json:"temperature_2m_max"`
+	MinTemps []float64 `json:"temperature_2m_min"`
+	UVIndex  []float64 `json:"uv_index_max"`
+	Sunrise  []string  `json:"sunrise"`
+	Sunset   []string  `json:"sunset"`
+	Precip   []float64 `json:"precipitation_sum"`
+	World    []string  `json:"time"`
 }
 
 func createPattern(n int) string {
@@ -102,7 +102,8 @@ func createPattern(n int) string {
 	spaces := strings.Repeat(" ", 5-n)
 	return asterisks + spaces
 }
-func processJsonData(jsonData []byte, fah bool) {
+
+func processJsonData(jsonData []byte, fah bool, showPrecip bool, showUV bool) {
 	var resp Response
 
 	err := json.Unmarshal(jsonData, &resp)
@@ -111,51 +112,69 @@ func processJsonData(jsonData []byte, fah bool) {
 		return
 	}
 
-	var min = 1000000000000000.0
-	var max = 0.0
-
-	for i := 0; i < len(resp.History.Hello); i++ {
-		var temp = resp.History.Hello[i]
-		temp += 70.0
-		if temp < min {
-			min = temp
+	var minTemp, maxTemp float64
+	for _, temp := range resp.History.MaxTemps {
+		if minTemp == 0 || temp < minTemp {
+			minTemp = temp
 		}
-		if temp > max {
-			max = temp
+		if temp > maxTemp {
+			maxTemp = temp
 		}
 	}
 
-	//fmt.Println(min)
-	//fmt.Println(max)
+	for i := 0; i < len(resp.History.MaxTemps); i++ {
+		var temp float64
+		if fah {
+			temp = (resp.History.MaxTemps[i] * 9 / 5) + 32 // Convert to Fahrenheit
+		} else {
+			temp = resp.History.MaxTemps[i]
+		}
 
-	for i := 0; i < len(resp.History.Hello); i++ {
-		var temp = float64(int(resp.History.Hello[i]) + 70)
-		var stars = int(((temp - min) / (max - min)) * 5)
+		stars := int(((temp - minTemp) / (maxTemp - minTemp)) * 5)
 		if stars <= 0 {
 			stars = 1
 		}
-		t, err := time.Parse("2006-01-02", resp.History.World[i])
-		if err != nil {
-			panic(err)
-		}
-		var sunrise = "_"
-		if len(resp.History.Sunrise) != 0 {
+
+		sunrise := "_"
+		if len(resp.History.Sunrise) > 0 {
 			sunrise = resp.History.Sunrise[i]
 		}
 
-		var sunset = "_"
-		if len(resp.History.Sunset) != 0 {
+		sunset := "_"
+		if len(resp.History.Sunset) > 0 {
 			sunset = resp.History.Sunset[i]
 		}
 
-		if fah {
-		fmt.Println(createPattern(stars), fmt.Sprintf("%02d", int(temp)-70), "°F",resp.History.World[i], sunrise, sunset, t.Weekday())
+		var precipitation string
+		if showPrecip {
+			if len(resp.History.Precip) > 0 {
+				precipitation = fmt.Sprintf("Precip: %.2f mm", resp.History.Precip[i])
+			} else {
+				precipitation = "Precip: _"
+			}
 		} else {
-			fmt.Println(createPattern(stars), fmt.Sprintf("%02d", int(temp)-70), "°C", resp.History.World[i], sunrise, sunset, t.Weekday())
+			precipitation = "Precip: _"
+		}
 
+		var uvIndex string
+		if showUV {
+			if len(resp.History.UVIndex) > 0 {
+				uvIndex = fmt.Sprintf("UV Index: %.1f", resp.History.UVIndex[i])
+			} else {
+				uvIndex = "UV Index: _"
+			}
+		} else {
+			uvIndex = "UV Index: _"
+		}
+
+		if fah {
+			fmt.Printf("%s %02d °F | %s | %s | %s | %s | %s\n",
+				createPattern(stars), int(temp), resp.History.World[i], sunrise, sunset, precipitation, uvIndex)
+		} else {
+			fmt.Printf("%s %02d °C | %s | %s | %s | %s | %s\n",
+				createPattern(stars), int(temp), resp.History.World[i], sunrise, sunset, precipitation, uvIndex)
 		}
 	}
-
 }
 
 func FindCityLocation(city City) (string, string, error) {
@@ -244,5 +263,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	processJsonData(weather, *fahrenheit)
+	processJsonData(weather, *fahrenheit, *prec, *uv)
 }
