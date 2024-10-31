@@ -92,6 +92,9 @@ type Response struct {
 type History struct {
 	Hello []float64 `json:"temperature_2m_max"`
 	World []string  `json:"time"`
+	Index []float64 `json:"uv_index_max"`
+	Sunrise []string `json:"sunrise"`
+	Sunset []string `json:"sunset"`
 }
 
 func createPattern(n int) string {
@@ -126,7 +129,7 @@ func processJsonData(jsonData []byte) {
 	//fmt.Println(max)
 
 	for i := 0; i < len(resp.History.Hello); i++ {
-		var temp = resp.History.Hello[i] + 70
+		var temp = float64(int(resp.History.Hello[i]) + 70)
 		var stars = int((temp - min) / (max - min) * 5)
 		if stars == 0 {
 			stars = 1
@@ -163,7 +166,6 @@ func FindCityLocation(city City) (string, string, error) {
 
 	for i := 0; i < len(geocodingResponse.GeoCodingResults); i++ {
 		if geocodingResponse.GeoCodingResults[i].Country == city.Country {
-			log.Println("Matched country location: ", geocodingResponse.GeoCodingResults[i])
 			return geocodingResponse.GeoCodingResults[i].Latitude.String(), geocodingResponse.GeoCodingResults[i].Longitude.String(), nil
 		}
 	}
@@ -235,7 +237,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	// TODO: Print weather
-	fmt.Printf("Weather in %s, %s on %s: %s\n", *city, *country, *day, string(weather))
 	processJsonData(weather)
 }
