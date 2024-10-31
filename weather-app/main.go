@@ -172,7 +172,6 @@ func FindCityLocation(city City) (string, string, error) {
 }
 
 func main() {
-	// TODO: Take input
 	city := flag.String("city", "", "Name of the city (e.g., 'The Hague') - *Mandatory")
 	country := flag.String("country", "", "Country of the city (e.g., 'Netherlands') - *Mandatory")
 	day := flag.String("day", "", "Day for the weather forecast (e.g., '2024-10-31') - Optional (default is today)")
@@ -183,22 +182,22 @@ func main() {
 	fahrenheit := flag.Bool("f", false, "Use fahrenheit - Optional")
 
 	flag.Usage = func() {
-		fmt.Println("Weather Forcast Tool")
-		fmt.Println("Weekly weather forcast for a city.")
+		fmt.Println("Weather Forecast Tool")
+		fmt.Println("Weekly weather forecast for a city.")
 		fmt.Println("Usage:")
-		fmt.Println("  go run main.go -city=\"CityName\" -country=\"CountryName\" [-day=\"YYYY-MM-DD\"] [-uv] [-sunrise]")
+		fmt.Println("  go run main.go -city=\"CityName\" -country=\"CountryName\" [-day=\"YYYY-MM-DD\"] [-uv] [-sunrise] [-p] [-sunset] [-f]")
 		fmt.Println()
 		fmt.Println("Mandatory Flags:")
-		fmt.Println("  -city      Name of the city (e.g., 'The Hague')")
-		fmt.Println("  -country   Country of the city (e.g., 'Netherlands')")
+		fmt.Println("  -city     Name of the city (e.g., 'The Hague')")
+		fmt.Println("  -country  Country of the city (e.g., 'Netherlands')")
 		fmt.Println()
 		fmt.Println("Optional Flags:")
-		fmt.Println("  -day       Day for the weather forecast (default is today)")
-		fmt.Println("  -p   	  Get precipitation")
-		fmt.Println("  -uv        Get UV index")
-		fmt.Println("  -sunrise   Get sunrise time")
-		fmt.Println("  -sunset    Get sunset time")
-		fmt.Println("  -f      	  Use fahrenheit")
+		fmt.Println("  -day      Day for the weather forecast (default is today)")
+		fmt.Println("  -p        Get precipitation")
+		fmt.Println("  -uv       Get UV index")
+		fmt.Println("  -sunrise  Get sunrise time")
+		fmt.Println("  -sunset   Get sunset time")
+		fmt.Println("  -f        Use fahrenheit")
 	}
 
 	flag.Parse()
@@ -212,7 +211,6 @@ func main() {
 		*day = time.Now().Format("2006-01-02")
 	}
 
-	// TODO: ask weather
 	lat, lon, err := FindCityLocation(City{Name: *city, Country: *country})
 	if err != nil {
 		fmt.Println(err)
