@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"time"
+	"strings"
 )
 
 type City struct {
@@ -33,18 +34,43 @@ type Location struct {
 	Latitude  string
 }
 
-type Forecast struct {
-	Temperature string
-	Location    Location
+type ForecastParams struct {
+	Precipitation bool
+	Sunrise bool
+	Sunset bool
+	UVIndex bool
 }
 
-func GetWeather(loc Location, uv bool, sunrise bool) ([]byte, error) {
-	formattedURL := fmt.Sprintf(
-		"https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&daily=temperature_2m_max,temperature_2m_min",
-		loc.Latitude,
+
+func formatExtraForecastParams(f ForecastParams) string {
+	var formattedParams strings.Builder
+	if f.Precipitation{
+		formattedParams.WriteString(",precipitation_sum")
+	}
+	if f.Sunrise{
+		formattedParams.WriteString(",sunrise")
+	}
+	if f.Sunset{
+		formattedParams.WriteString(",sunset")
+	}
+	if f.UVIndex{
+		
+	}
+	return formattedParams.String()
+}
+
+
+func GetWeather(loc Location, forecast_params ForecastParams) ([]byte, error) {
+	var formattedUrl strings.Builder
+	formattedUrl.WriteString("https://api.open-meteo.com/v1/forecast?")
+	formattedUrl.WriteString(fmt.Sprintf(
+		"latitude=%s&longitude=%s&daily=temperature_2m_max,temperature_2m_min", 
+		loc.Latitude, 
 		loc.Longitude,
-	)
-	response, err := http.Get(formattedURL)
+	))
+	
+
+	response, err := http.Get(formattedUrl.String())
 
 	if err != nil {
 		return []byte{}, err
