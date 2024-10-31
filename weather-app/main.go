@@ -90,11 +90,11 @@ type Response struct {
 	History History `json:"daily"`
 }
 type History struct {
-	Hello []float64 `json:"temperature_2m_max"`
-	World []string  `json:"time"`
-	Index []float64 `json:"uv_index_max"`
-	Sunrise []string `json:"sunrise"`
-	Sunset []string `json:"sunset"`
+	Hello   []float64 `json:"temperature_2m_max"`
+	World   []string  `json:"time"`
+	Index   []float64 `json:"uv_index_max"`
+	Sunrise []string  `json:"sunrise"`
+	Sunset  []string  `json:"sunset"`
 }
 
 func createPattern(n int) string {
@@ -176,7 +176,6 @@ func FindCityLocation(city City) (string, string, error) {
 func main() {
 	city := flag.String("city", "", "Name of the city (e.g., 'The Hague') - *Mandatory")
 	country := flag.String("country", "", "Country of the city (e.g., 'Netherlands') - *Mandatory")
-	day := flag.String("day", "", "Day for the weather forecast (e.g., '2024-10-31') - Optional (default is today)")
 	prec := flag.Bool("p", false, "Get precipitation - Optional")
 	uv := flag.Bool("uv", false, "Get UV index - Optional")
 	sunrise := flag.Bool("sunrise", false, "Get sunrise time - Optional")
@@ -187,14 +186,12 @@ func main() {
 		fmt.Println("Weather Forecast Tool")
 		fmt.Println("Weekly weather forecast for a city.")
 		fmt.Println("Usage:")
-		fmt.Println("  go run main.go -city=\"CityName\" -country=\"CountryName\" [-day=\"YYYY-MM-DD\"] [-uv] [-sunrise] [-p] [-sunset] [-f]")
 		fmt.Println()
 		fmt.Println("Mandatory Flags:")
 		fmt.Println("  -city     Name of the city (e.g., 'The Hague')")
 		fmt.Println("  -country  Country of the city (e.g., 'Netherlands')")
 		fmt.Println()
 		fmt.Println("Optional Flags:")
-		fmt.Println("  -day      Day for the weather forecast (default is today)")
 		fmt.Println("  -p        Get precipitation")
 		fmt.Println("  -uv       Get UV index")
 		fmt.Println("  -sunrise  Get sunrise time")
@@ -207,10 +204,6 @@ func main() {
 	if *city == "" || *country == "" {
 		flag.Usage()
 		os.Exit(1)
-	}
-
-	if *day == "" {
-		*day = time.Now().Format("2006-01-02")
 	}
 
 	lat, lon, err := FindCityLocation(City{Name: *city, Country: *country})
