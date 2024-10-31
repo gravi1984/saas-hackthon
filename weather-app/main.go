@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 )
 
@@ -37,7 +38,7 @@ type Forecast struct {
 }
 
 func GetWeather(loc Location) []byte {
-	formattedURL := fmt.Sprintf("https://api.weather.gov/gridpoints/TOP/%d,%d/forecast", loc.Longitude, loc.Latitude)
+	formattedURL := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&daily=temperature_2m_max,temperature_2m_min", loc.Latitude, loc.Longitude)
 	response, err := http.Get(formattedURL)
 
 	if err != nil {
@@ -51,13 +52,14 @@ func GetWeather(loc Location) []byte {
 		os.Exit(1)
 	}
 
-	fmt.Printf("RESPONSEEEEEE", string(responseData))
+	fmt.Printf("RESPONSE:\n", string(responseData))
 	return responseData
 }
 
 func FindCityLocation(city City) (string, string, error) {
-	url := fmt.Sprintf("https://geocoding-api.open-meteo.com/v1/search?name=%s&count=10&language=en&format=json", city.Name)
-	response, err := http.Get(url)
+	api_params := url.PathEscape(fmt.Sprintf("name=%s&count=10&language=en&format=json", city.Name))
+	api_url := fmt.Sprintf("https://geocoding-api.open-meteo.com/v1/search?%s", api_params)
+	response, err := http.Get(api_url)
 
 	if err != nil {
 		return "", "", err
