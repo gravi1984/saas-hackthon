@@ -16,13 +16,14 @@ type City struct {
 }
 
 type GeoCodingResponse struct {
-	GeoCodingResults []GeoCodingResult `json:"geocoding_results"`
+	GeoCodingResults []GeoCodingResult `json:"results"`
 }
+
 
 type GeoCodingResult struct {
 	Name      string `json:"name"`
-	Latitude  string `json:"latitude"`
-	Longitude string `json:"longitude"`
+	Latitude  json.Number `json:"latitude"`
+	Longitude json.Number `json:"longitude"`
 	Country   string `json:"country"`
 }
 
@@ -37,8 +38,8 @@ type Forecast struct {
 }
 
 func GetWeather(loc Location) []byte {
-	// formattedURL := fmt.Sprintf("https://api.weather.gov/gridpoints/TOP/%s,%s/forecast", loc.Longitude, loc.Latitude)
-	response, err := http.Get("https://api.weather.gov/gridpoints/TOP/31,80/forecast")
+	formattedURL := fmt.Sprintf("https://api.weather.gov/gridpoints/TOP/%d,%d/forecast", loc.Longitude, loc.Latitude)
+	response, err := http.Get(formattedURL)
 
 	if err != nil {
 		fmt.Print((err.Error()))
@@ -51,34 +52,39 @@ func GetWeather(loc Location) []byte {
 		os.Exit(1)
 	}
 
+	fmt.Printf("RESPONSEEEEEE", string(responseData))
 	return responseData
 }
 
-func FindCityLocation(city City) (string, string) {
+func FindCityLocation(city City) (string, string, error) {
 	url := fmt.Sprintf("https://geocoding-api.open-meteo.com/v1/search?name=%s&count=10&language=en&format=json", city.Name)
 	response, err := http.Get(url)
 
 	if err != nil {
-		fmt.Print(err.Error())
-		os.Exit(1)
+		return "", "", err
 	}
 
 	responseData, err := io.ReadAll(response.Body)
 	if err != nil {
-		log.Fatal(err)
+		return "", "", err
 	}
-	fmt.Println(string(responseData))
 
-	var geocoding_response GeoCodingResponse
-	json.Unmarshal(responseData, &geocoding_response)
-
-	for i := 0; i < len(geocoding_response.GeoCodingResults); i++ {
-		if geocoding_response.GeoCodingResults[i].Country == city.Country {
-			return geocoding_response.GeoCodingResults[i].Latitude, geocoding_response.GeoCodingResults[i].Longitude
-		}
+	var geocodingResponse GeoCodingResponse
+	err = json.Unmarshal(responseData, &geocodingResponse)
+	if err != nil {
+		log.Fatalf("Error unmarshalling JSON: %v", err)
 	}
-	return "", ""
+
+	for i := 0; i < len(geocodingResponse.GeoCodingResults); i++ {
+		if geocodingResponse.GeoCodingResults[i].Country == city.Country {
+			log.Println("Matched country location: ", geocodingResponse.GeoCodingResults[i])
+			return geocodingResponse.GeoCodingResults[i].Latitude.String(), geocodingResponse.GeoCodingResults[i].Longitude.String(), nil
+		}	
+	}
+
+	return "", "", fmt.Errorf("Could not find a proper location match for %s of country %s", city.Name, city.Country)
 }
+
 
 func main() {
 	// Take input
@@ -91,8 +97,11 @@ func main() {
 		log.Fatal("City, country, and day must be provided.")
 	}
 
-	// Call logic func
-	lat, lon := FindCityLocation(City{Name: *city, Country: *country})
+	lat, lon, err := FindCityLocation(City{Name: *city, Country: *country})
+	if err != nil{
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	loc := Location{
 		Latitude:  lat,
