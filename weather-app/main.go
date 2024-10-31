@@ -84,6 +84,63 @@ func GetWeather(loc Location, forecast_params ForecastParams) ([]byte, error) {
 	return responseData, nil
 }
 
+type Response struct {
+	History History `json:"daily"`
+}
+type History struct {
+	Hello []float64 `json:"temperature_2m_max"`
+	World []string  `json:"time"`
+}
+func createPattern(n int) string {
+	asterisks := strings.Repeat("*", n)
+	spaces := strings.Repeat(" ", 5-n)
+	return asterisks + spaces
+}
+func processJsonData(jsonData []byte) {
+	var resp Response
+
+	err := json.Unmarshal(jsonData, &resp)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+
+	var min = 1000000000000000.0
+	var max = 0.0
+
+	for i := 0; i < len(resp.History.Hello); i++ {
+		var temp = resp.History.Hello[i]
+		temp += 70.0
+		if temp < min {
+			min = temp
+		}
+		if temp > max {
+			max = temp
+		}
+	}
+
+	//fmt.Println(min)
+	//fmt.Println(max)
+
+	for i := 0; i < len(resp.History.Hello); i++ {
+		var temp = resp.History.Hello[i] + 70
+		var stars = int((temp - min) / (max - min) * 5)
+		if stars == 0 {
+			stars = 1
+		}
+		t, err := time.Parse("2006-01-02", resp.History.World[i])
+if err != nil {
+    panic(err)
+}
+		fmt.Println(createPattern(stars),  fmt.Sprintf("%02d", int(temp)-70),"°C", resp.History.World[i], t.Weekday())
+
+	}
+
+}
+
+
+
 func FindCityLocation(city City) (string, string, error) {
 	api_params := url.PathEscape(fmt.Sprintf("name=%s&count=10&language=en&format=json", city.Name))
 	api_url := fmt.Sprintf("https://geocoding-api.open-meteo.com/v1/search?%s", api_params)
@@ -169,4 +226,5 @@ func main() {
 
 	// TODO: Print weather
 	fmt.Printf("Weather in %s, %s on %s: %s\n", *city, *country, *day, string(weather))
+	processJsonData(weather)
 }
