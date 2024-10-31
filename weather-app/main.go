@@ -37,23 +37,25 @@ type Forecast struct {
 	Location    Location
 }
 
-func GetWeather(loc Location) []byte {
-	formattedURL := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&daily=temperature_2m_max,temperature_2m_min", loc.Latitude, loc.Longitude)
+func GetWeather(loc Location) ([]byte, error) {
+	formattedURL := fmt.Sprintf(
+		"https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&daily=temperature_2m_max,temperature_2m_min", 
+		loc.Latitude, 
+		loc.Longitude,
+	)
 	response, err := http.Get(formattedURL)
 
 	if err != nil {
-		fmt.Print((err.Error()))
-		os.Exit(1)
+		return []byte{}, err
 	}
 
 	responseData, err := io.ReadAll(response.Body)
 	if err != nil {
-		fmt.Print((err.Error()))
-		os.Exit(1)
+		return []byte{}, err
 	}
 
 	fmt.Printf("RESPONSE:\n", string(responseData))
-	return responseData
+	return responseData, nil
 }
 
 func FindCityLocation(city City) (string, string, error) {
@@ -109,7 +111,7 @@ func main() {
 		Longitude: lon,
 	}
 
-	weather := GetWeather(loc)
+	weather, err := GetWeather(loc)
 
 	// TODO: Print weather
 	fmt.Printf("Weather in %s, %s on %s: %s\n", *city, *country, *day, string(weather))
