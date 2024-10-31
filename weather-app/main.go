@@ -130,8 +130,8 @@ func processJsonData(jsonData []byte) {
 
 	for i := 0; i < len(resp.History.Hello); i++ {
 		var temp = float64(int(resp.History.Hello[i]) + 70)
-		var stars = int((temp - min) / (max - min) * 5)
-		if stars == 0 {
+		var stars = int(((temp - min) / (max - min)) * 5)
+		if stars <= 0 {
 			stars = 1
 		}
 		t, err := time.Parse("2006-01-02", resp.History.World[i])
