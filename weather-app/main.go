@@ -36,10 +36,10 @@ type Location struct {
 
 type ForecastParams struct {
 	Precipitation bool
-	Sunrise bool
-	Sunset bool
-	UVIndex bool
-	Fahr  bool
+	Sunrise       bool
+	Sunset        bool
+	UVIndex       bool
+	Fahr          bool
 }
 
 func formatExtraForecastParams(f ForecastParams) string {
@@ -53,10 +53,10 @@ func formatExtraForecastParams(f ForecastParams) string {
 	if f.Sunset {
 		formattedParams.WriteString(",sunset")
 	}
-	if f.UVIndex{
-		formattedParams.WriteString(",uv_index_max")	
+	if f.UVIndex {
+		formattedParams.WriteString(",uv_index_max")
 	}
-	if f.Fahr{
+	if f.Fahr {
 		formattedParams.WriteString("&temperature_unit=fahrenheit")
 	}
 	return formattedParams.String()
@@ -66,8 +66,8 @@ func GetWeather(loc Location, forecast_params ForecastParams) ([]byte, error) {
 	var formattedUrl strings.Builder
 	formattedUrl.WriteString("https://api.open-meteo.com/v1/forecast?")
 	formattedUrl.WriteString(fmt.Sprintf(
-		"latitude=%s&longitude=%s&daily=temperature_2m_max,temperature_2m_min", 
-		loc.Latitude, 
+		"latitude=%s&longitude=%s&daily=temperature_2m_max,temperature_2m_min",
+		loc.Latitude,
 		loc.Longitude,
 	))
 	formattedUrl.WriteString(formatExtraForecastParams(forecast_params))
@@ -93,6 +93,7 @@ type History struct {
 	Hello []float64 `json:"temperature_2m_max"`
 	World []string  `json:"time"`
 }
+
 func createPattern(n int) string {
 	asterisks := strings.Repeat("*", n)
 	spaces := strings.Repeat(" ", 5-n)
@@ -106,7 +107,6 @@ func processJsonData(jsonData []byte) {
 		fmt.Println("Error:", err)
 		return
 	}
-
 
 	var min = 1000000000000000.0
 	var max = 0.0
@@ -132,16 +132,14 @@ func processJsonData(jsonData []byte) {
 			stars = 1
 		}
 		t, err := time.Parse("2006-01-02", resp.History.World[i])
-if err != nil {
-    panic(err)
-}
-		fmt.Println(createPattern(stars),  fmt.Sprintf("%02d", int(temp)-70),"°C", resp.History.World[i], t.Weekday())
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(createPattern(stars), fmt.Sprintf("%02d", int(temp)-70), "°C", resp.History.World[i], t.Weekday())
 
 	}
 
 }
-
-
 
 func FindCityLocation(city City) (string, string, error) {
 	api_params := url.PathEscape(fmt.Sprintf("name=%s&count=10&language=en&format=json", city.Name))
@@ -182,6 +180,7 @@ func main() {
 	uv := flag.Bool("uv", false, "Get UV index - Optional")
 	sunrise := flag.Bool("sunrise", false, "Get sunrise time - Optional")
 	sunset := flag.Bool("sunset", false, "Get sunset time - Optional")
+	fahrenheit := flag.Bool("f", false, "Use fahrenheit - Optional")
 
 	flag.Usage = func() {
 		fmt.Println("Weather Forcast Tool")
@@ -199,6 +198,7 @@ func main() {
 		fmt.Println("  -uv        Get UV index")
 		fmt.Println("  -sunrise   Get sunrise time")
 		fmt.Println("  -sunset    Get sunset time")
+		fmt.Println("  -f      	  Use fahrenheit")
 	}
 
 	flag.Parse()
@@ -228,6 +228,7 @@ func main() {
 		Sunrise:       *sunrise,
 		Sunset:        *sunset,
 		UVIndex:       *uv,
+		Fahr:          *fahrenheit,
 	}
 
 	weather, err := GetWeather(loc, params)
