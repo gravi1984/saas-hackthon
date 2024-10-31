@@ -102,7 +102,7 @@ func createPattern(n int) string {
 	spaces := strings.Repeat(" ", 5-n)
 	return asterisks + spaces
 }
-func processJsonData(jsonData []byte) {
+func processJsonData(jsonData []byte, fah bool) {
 	var resp Response
 
 	err := json.Unmarshal(jsonData, &resp)
@@ -138,7 +138,12 @@ func processJsonData(jsonData []byte) {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(createPattern(stars), fmt.Sprintf("%02d", int(temp)-70), "°C", resp.History.World[i], t.Weekday())
+		if fah {
+		fmt.Println(createPattern(stars), fmt.Sprintf("%02d", int(temp)-70), "°F", resp.History.World[i], t.Weekday())
+		} else {
+			fmt.Println(createPattern(stars), fmt.Sprintf("%02d", int(temp)-70), "°C", resp.History.World[i], t.Weekday())
+
+		}
 
 	}
 
@@ -237,5 +242,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	processJsonData(weather)
+	processJsonData(weather, *fahrenheit)
 }
