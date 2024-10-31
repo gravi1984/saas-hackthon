@@ -126,7 +126,7 @@ func processJsonData(jsonData []byte) {
 	//fmt.Println(max)
 
 	for i := 0; i < len(resp.History.Hello); i++ {
-		var temp = resp.History.Hello[i] + 70
+		var temp = float64(int(resp.History.Hello[i]) + 70)
 		var stars = int((temp - min) / (max - min) * 5)
 		if stars == 0 {
 			stars = 1
