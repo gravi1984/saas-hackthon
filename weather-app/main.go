@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 )
 
 type City struct {
@@ -66,7 +67,7 @@ func GetWeather(loc Location, forecast_params ForecastParams) ([]byte, error) {
 	var formattedUrl strings.Builder
 	formattedUrl.WriteString("https://api.open-meteo.com/v1/forecast?")
 	formattedUrl.WriteString(fmt.Sprintf(
-		"latitude=%s&longitude=%s",
+		"latitude=%s&longitude=%s&timezone=auto",
 		loc.Latitude,
 		loc.Longitude,
 	))
@@ -159,11 +160,15 @@ func processJsonData(jsonData []byte, fah bool, showPrecip bool, showUV bool, sh
 			resp.History.World[i])
 
 		if showSunrise && len(resp.History.Sunrise) > 0 {
-			output += fmt.Sprintf(" | Sunrise: %s", resp.History.Sunrise[i])
+			if t, err := time.Parse("2006-01-02T15:04", resp.History.Sunrise[i]); err == nil {
+				output += fmt.Sprintf(" | Sunrise: %s", t.Format("15:04"))
+			}
 		}
 
 		if showSunset && len(resp.History.Sunset) > 0 {
-			output += fmt.Sprintf(" | Sunset: %s", resp.History.Sunset[i])
+			if t, err := time.Parse("2006-01-02T15:04", resp.History.Sunset[i]); err == nil {
+				output += fmt.Sprintf(" | Sunset: %s", t.Format("15:04"))
+			}
 		}
 
 		if showPrecip {
