@@ -112,7 +112,7 @@ func createPattern(n int, isFahrenheit bool) string {
 	return asterisks + spaces
 }
 
-func processJsonData(jsonData []byte, fah bool, showPrecip bool, showUV bool) {
+func processJsonData(jsonData []byte, fah bool, showPrecip bool, showUV bool, showSunrise bool, showSunset bool) {
 	var resp Response
 
 	err := json.Unmarshal(jsonData, &resp)
@@ -147,51 +147,38 @@ func processJsonData(jsonData []byte, fah bool, showPrecip bool, showUV bool) {
 			stars = 1
 		}
 
-		sunrise := "_"
-		if len(resp.History.Sunrise) > 0 {
-			sunrise = resp.History.Sunrise[i]
-			sunrise = fmt.Sprintf("Sunrise: %s", resp.History.Sunrise[i])
-		} else {
-				sunrise = "Sunrise: -"
-			}
+		tempUnit := "C"
+		if fah {
+			tempUnit = "F"
+		}
 
-		sunset := "_"
-		if len(resp.History.Sunset) > 0 {
-			sunset = resp.History.Sunset[i]
-			sunset = fmt.Sprintf("Sunset: %s", resp.History.Sunset[i])
-		} else {
-				sunset = "Sunset: -"
-			}
+		output := fmt.Sprintf("%s %02d °%s | %s",
+			createPattern(stars, true),
+			int(temp),
+			tempUnit,
+			resp.History.World[i])
 
-		var precipitation string
+		if showSunrise && len(resp.History.Sunrise) > 0 {
+			output += fmt.Sprintf(" | Sunrise: %s", resp.History.Sunrise[i])
+		}
+
+		if showSunset && len(resp.History.Sunset) > 0 {
+			output += fmt.Sprintf(" | Sunset: %s", resp.History.Sunset[i])
+		}
+
 		if showPrecip {
 			if len(resp.History.Precip) > 0 {
-				precipitation = fmt.Sprintf("Precip: %.2f mm", resp.History.Precip[i])
-			} else {
-				precipitation = "Precip: -"
+				output += fmt.Sprintf(" | Precip: %.2f mm", resp.History.Precip[i])
 			}
-		} else {
-			precipitation = "Precip: -"
 		}
 
-		var uvIndex string
 		if showUV {
 			if len(resp.History.UVIndex) > 0 {
-				uvIndex = fmt.Sprintf("UV Index: %.1f", resp.History.UVIndex[i])
-			} else {
-				uvIndex = "UV Index: -"
+				output += fmt.Sprintf(" | UV Index: %.1f", resp.History.UVIndex[i])
 			}
-		} else {
-			uvIndex = "UV Index: -"
 		}
 
-		if fah {
-			fmt.Printf("%s %02d °F | %s | %s | %s | %s | %s\n",
-				createPattern(stars, true), int(temp), resp.History.World[i], sunrise, sunset, precipitation, uvIndex)
-		} else {
-			fmt.Printf("%s %02d °C | %s | %s | %s | %s | %s\n",
-				createPattern(stars, false), int(temp), resp.History.World[i], sunrise, sunset, precipitation, uvIndex)
-		}
+		fmt.Println(output)
 	}
 }
 
@@ -281,5 +268,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	processJsonData(weather, *fahrenheit, *prec, *uv)
+	processJsonData(weather, *fahrenheit, *prec, *uv, *sunrise, *sunset)
 }
