@@ -97,9 +97,18 @@ type History struct {
 	World    []string  `json:"time"`
 }
 
-func createPattern(n int) string {
-	asterisks := strings.Repeat("*", n)
-	spaces := strings.Repeat(" ", 5-n)
+func createPattern(n int, isFahrenheit bool) string {
+	if n < 0 {
+		fmt.Println(n)
+		n = 0
+	} else if n > 5 {
+		n = 5
+	}
+
+	stars := n
+
+	asterisks := strings.Repeat("*", stars)
+	spaces := strings.Repeat(" ", 5-stars)
 	return asterisks + spaces
 }
 
@@ -114,6 +123,9 @@ func processJsonData(jsonData []byte, fah bool, showPrecip bool, showUV bool) {
 
 	var minTemp, maxTemp float64
 	for _, temp := range resp.History.MaxTemps {
+		if fah {
+			temp = (temp * 9 / 5) + 32
+		}
 		if minTemp == 0 || temp < minTemp {
 			minTemp = temp
 		}
@@ -125,7 +137,7 @@ func processJsonData(jsonData []byte, fah bool, showPrecip bool, showUV bool) {
 	for i := 0; i < len(resp.History.MaxTemps); i++ {
 		var temp float64
 		if fah {
-			temp = (resp.History.MaxTemps[i] * 9 / 5) + 32 // Convert to Fahrenheit
+			temp = (resp.History.MaxTemps[i] * 9 / 5) + 32
 		} else {
 			temp = resp.History.MaxTemps[i]
 		}
@@ -138,22 +150,28 @@ func processJsonData(jsonData []byte, fah bool, showPrecip bool, showUV bool) {
 		sunrise := "_"
 		if len(resp.History.Sunrise) > 0 {
 			sunrise = resp.History.Sunrise[i]
-		}
+			sunrise = fmt.Sprintf("Sunrise: %s", resp.History.Sunrise[i])
+		} else {
+				sunrise = "Sunrise: -"
+			}
 
 		sunset := "_"
 		if len(resp.History.Sunset) > 0 {
 			sunset = resp.History.Sunset[i]
-		}
+			sunset = fmt.Sprintf("Sunset: %s", resp.History.Sunset[i])
+		} else {
+				sunset = "Sunset: -"
+			}
 
 		var precipitation string
 		if showPrecip {
 			if len(resp.History.Precip) > 0 {
 				precipitation = fmt.Sprintf("Precip: %.2f mm", resp.History.Precip[i])
 			} else {
-				precipitation = "Precip: _"
+				precipitation = "Precip: -"
 			}
 		} else {
-			precipitation = "Precip: _"
+			precipitation = "Precip: -"
 		}
 
 		var uvIndex string
@@ -161,18 +179,18 @@ func processJsonData(jsonData []byte, fah bool, showPrecip bool, showUV bool) {
 			if len(resp.History.UVIndex) > 0 {
 				uvIndex = fmt.Sprintf("UV Index: %.1f", resp.History.UVIndex[i])
 			} else {
-				uvIndex = "UV Index: _"
+				uvIndex = "UV Index: -"
 			}
 		} else {
-			uvIndex = "UV Index: _"
+			uvIndex = "UV Index: -"
 		}
 
 		if fah {
 			fmt.Printf("%s %02d °F | %s | %s | %s | %s | %s\n",
-				createPattern(stars), int(temp), resp.History.World[i], sunrise, sunset, precipitation, uvIndex)
+				createPattern(stars, true), int(temp), resp.History.World[i], sunrise, sunset, precipitation, uvIndex)
 		} else {
 			fmt.Printf("%s %02d °C | %s | %s | %s | %s | %s\n",
-				createPattern(stars), int(temp), resp.History.World[i], sunrise, sunset, precipitation, uvIndex)
+				createPattern(stars, false), int(temp), resp.History.World[i], sunrise, sunset, precipitation, uvIndex)
 		}
 	}
 }
