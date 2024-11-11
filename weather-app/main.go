@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 )
 
 type City struct {
@@ -66,7 +67,7 @@ func GetWeather(loc Location, forecast_params ForecastParams) ([]byte, error) {
 	var formattedUrl strings.Builder
 	formattedUrl.WriteString("https://api.open-meteo.com/v1/forecast?")
 	formattedUrl.WriteString(fmt.Sprintf(
-		"latitude=%s&longitude=%s",
+		"latitude=%s&longitude=%s&timezone=auto",
 		loc.Latitude,
 		loc.Longitude,
 	))
@@ -97,13 +98,22 @@ type History struct {
 	World    []string  `json:"time"`
 }
 
-func createPattern(n int) string {
-	asterisks := strings.Repeat("*", n)
-	spaces := strings.Repeat(" ", 5-n)
+func createPattern(n int, isFahrenheit bool) string {
+	if n < 0 {
+		fmt.Println(n)
+		n = 0
+	} else if n > 5 {
+		n = 5
+	}
+
+	stars := n
+
+	asterisks := strings.Repeat("*", stars)
+	spaces := strings.Repeat(" ", 5-stars)
 	return asterisks + spaces
 }
 
-func processJsonData(jsonData []byte, fah bool, showPrecip bool, showUV bool) {
+func processJsonData(jsonData []byte, fah bool, showPrecip bool, showUV bool, showSunrise bool, showSunset bool) {
 	var resp Response
 
 	err := json.Unmarshal(jsonData, &resp)
@@ -114,6 +124,9 @@ func processJsonData(jsonData []byte, fah bool, showPrecip bool, showUV bool) {
 
 	var minTemp, maxTemp float64
 	for _, temp := range resp.History.MaxTemps {
+		if fah {
+			temp = (temp * 9 / 5) + 32
+		}
 		if minTemp == 0 || temp < minTemp {
 			minTemp = temp
 		}
@@ -125,7 +138,7 @@ func processJsonData(jsonData []byte, fah bool, showPrecip bool, showUV bool) {
 	for i := 0; i < len(resp.History.MaxTemps); i++ {
 		var temp float64
 		if fah {
-			temp = (resp.History.MaxTemps[i] * 9 / 5) + 32 // Convert to Fahrenheit
+			temp = (resp.History.MaxTemps[i] * 9 / 5) + 32
 		} else {
 			temp = resp.History.MaxTemps[i]
 		}
@@ -135,45 +148,42 @@ func processJsonData(jsonData []byte, fah bool, showPrecip bool, showUV bool) {
 			stars = 1
 		}
 
-		sunrise := "_"
-		if len(resp.History.Sunrise) > 0 {
-			sunrise = resp.History.Sunrise[i]
+		tempUnit := "C"
+		if fah {
+			tempUnit = "F"
 		}
 
-		sunset := "_"
-		if len(resp.History.Sunset) > 0 {
-			sunset = resp.History.Sunset[i]
+		output := fmt.Sprintf("%s %02d °%s | %s",
+			createPattern(stars, true),
+			int(temp),
+			tempUnit,
+			resp.History.World[i])
+
+		if showSunrise && len(resp.History.Sunrise) > 0 {
+			if t, err := time.Parse("2006-01-02T15:04", resp.History.Sunrise[i]); err == nil {
+				output += fmt.Sprintf(" | Sunrise: %s", t.Format("15:04"))
+			}
 		}
 
-		var precipitation string
+		if showSunset && len(resp.History.Sunset) > 0 {
+			if t, err := time.Parse("2006-01-02T15:04", resp.History.Sunset[i]); err == nil {
+				output += fmt.Sprintf(" | Sunset: %s", t.Format("15:04"))
+			}
+		}
+
 		if showPrecip {
 			if len(resp.History.Precip) > 0 {
-				precipitation = fmt.Sprintf("Precip: %.2f mm", resp.History.Precip[i])
-			} else {
-				precipitation = "Precip: _"
+				output += fmt.Sprintf(" | Precip: %.2f mm", resp.History.Precip[i])
 			}
-		} else {
-			precipitation = "Precip: _"
 		}
 
-		var uvIndex string
 		if showUV {
 			if len(resp.History.UVIndex) > 0 {
-				uvIndex = fmt.Sprintf("UV Index: %.1f", resp.History.UVIndex[i])
-			} else {
-				uvIndex = "UV Index: _"
+				output += fmt.Sprintf(" | UV Index: %.1f", resp.History.UVIndex[i])
 			}
-		} else {
-			uvIndex = "UV Index: _"
 		}
 
-		if fah {
-			fmt.Printf("%s %02d °F | %s | %s | %s | %s | %s\n",
-				createPattern(stars), int(temp), resp.History.World[i], sunrise, sunset, precipitation, uvIndex)
-		} else {
-			fmt.Printf("%s %02d °C | %s | %s | %s | %s | %s\n",
-				createPattern(stars), int(temp), resp.History.World[i], sunrise, sunset, precipitation, uvIndex)
-		}
+		fmt.Println(output)
 	}
 }
 
@@ -263,5 +273,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	processJsonData(weather, *fahrenheit, *prec, *uv)
+	processJsonData(weather, *fahrenheit, *prec, *uv, *sunrise, *sunset)
 }
